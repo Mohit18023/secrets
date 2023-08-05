@@ -8,7 +8,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
-const encrypt = require('mongoose-encryption');
+const md5 = require('md5');
+
+// for level 2 authentication
+// const encrypt = require('mongoose-encryption');
 
 
 
@@ -52,10 +55,10 @@ const userSchema = new mongoose.Schema({
 
 // defining secret for encrption
 // defined inside .env file for security
-console.log(process.env.SECRET)
+// console.log(process.env.SECRET)
 
-//we must specify the plugin before we create mongoose model
-userSchema.plugin(encrypt, {secret: process.env.SECRET , encryptedFields: ["password"]});
+//we must specify the plugin before we create mongoose model for level 2 authentication
+//userSchema.plugin(encrypt, {secret: process.env.SECRET , encryptedFields: ["password"]});
 
 // Setting up new user model
 const User = new mongoose.model("User",userSchema);
@@ -93,7 +96,7 @@ app.post("/register",async (req,res) => {
     try{
     const newUser = new User({
         email: req.body.username,
-        password: req.body.password
+        password: md5(req.body.password)
     });
 
 
@@ -113,20 +116,15 @@ app.post("/register",async (req,res) => {
   } catch (error) {
     console.error('Error registering user:', error);
   }
-
-
-
 });
 
 
 //Handelling request for login route
 
 app.post("/login",async (req,res) => {
-
- 
     // Accessing the credentials
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
     
     // checking the credentials against our database using the find method of mongoose 
     try{
@@ -149,10 +147,6 @@ app.post("/login",async (req,res) => {
 
 });
 
-
-
-
-
 app.listen(3000,()=>{
     console.log(`Server started on port: 3000`)
-})
+});
